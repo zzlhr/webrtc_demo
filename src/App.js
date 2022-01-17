@@ -1,69 +1,48 @@
-import logo from './logo.svg';
 import './App.css';
 import {useEffect, useState} from "react";
-import RecordRTC from './RecordRTC'
+import Peer from 'peerjs';
 
 function App() {
-    const [disable, setDisable] = useState(false)
-    const [video, setVideo] = useState()
-    let recorder;
+    const [peer, setPeer] = useState({})
+    const [conn, setConn] = useState({})
+    const [id, setId] = useState("")
+    const [tid, setTid] = useState("")
+    useEffect(() => {
 
-    function captureCamera(callback) {
-        navigator.mediaDevices.getUserMedia({audio: true, video: true}).then(function (camera) {
-            callback(camera);
-        }).catch(function (error) {
-            alert('Unable to capture your camera. Please check console logs.');
-            console.error(error);
-        });
-    }
-
-    function stopRecordingCallback() {
-        const _video = video
-        _video.src = _video.srcObject = null;
-        _video.muted = false;
-        _video.volume = 1;
-        _video.src = URL.createObjectURL(recorder.getBlob());
-        setVideo(_video)
-        recorder.camera.stop();
-        recorder.destroy();
-        recorder = null;
-    }
-
-    const btnStopRecordingClickHandler = () => {
-        setDisable(true);
-        recorder.stopRecording(stopRecordingCallback);
-    }
-    const btnStartRecordingClickHandler = () => {
-        setDisable(true);
-        captureCamera(function (camera) {
-            const _video = video
-            _video.muted = true;
-            _video.volume = 0;
-            _video.srcObject = camera;
-            setVideo(_video)
-            recorder = RecordRTC(camera, {
-                type: 'video'
-            });
-
-            recorder.startRecording();
-
-            // release camera on stopRecording
-            recorder.camera = camera;
-            setDisable(false)
-            // document.getElementById('btn-stop-recording').disabled = false;
-        });
-    }
-    useEffect({
     }, [])
-    return (
-        <div className="App">
-            <button id="btn-start-recording" onClick={btnStartRecordingClickHandler}>Start Recording</button>
-            <button id="btn-stop-recording" onClick={btnStopRecordingClickHandler} disabled={disable}>Stop Recording
-            </button>
-            <video controls autoPlay playsInline/>
-            <video autoPlay/>
-        </div>
-    );
+    return (<div className="App">
+        <label htmlFor="mid">请输入你的id</label>
+        <input id="mid" value={id} onChange={(v) => {
+            setId(v.target.value)
+        }}/>
+        <button onClick={() => {
+            // setPeer();
+            const _peer = new Peer(id, {host: "49.232.205.191", port: 19000, path: '/test'});
+            setPeer(_peer)
+
+        }}>
+            连接
+        </button>
+        <label htmlFor="tid">请输入ta的id</label>
+        <input id="tid" value={tid} onChange={(v) => {
+            setTid(v.target.value)
+        }}/>
+        <button id="btn-start-recording" onClick={() => {
+            const conn = peer.connect(tid, {});
+            setConn(conn)
+            conn.on('open', () => {
+                conn.send('hi!');
+            });
+            conn.on('data', (data) => {
+                // Will print 'hi!'
+                console.log(data);
+            });
+        }}>call
+        </button>
+        <button id="btn-stop-recording">断开
+        </button>
+        <video controls autoPlay playsInline/>
+    </div>);
 }
 
 export default App;
